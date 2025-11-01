@@ -160,7 +160,7 @@
       appendMessage("⏳ Procesando tu solicitud...", "bot");
 
       try {
-        const response = await fetch("http://localhost:8000/rag-chat", {
+        const response = await fetch("/rag-chat", {
           method: "POST",
           body: formData,
         });
