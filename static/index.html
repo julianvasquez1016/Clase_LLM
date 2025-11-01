@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RAG Chat - Bien Melo 😎</title>
+  <style>
+    body {
+      background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+      font-family: "Poppins", sans-serif;
+      color: #f8f9fa;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      margin: 0;
+    }
+
+    header {
+      text-align: center;
+      padding: 1rem;
+      font-size: 1.5rem;
+      font-weight: 600;
+      background: rgba(255,255,255,0.1);
+      backdrop-filter: blur(10px);
+      color: #00e5ff;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+    }
+
+    .chat-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      max-width: 800px;
+      margin: 0 auto;
+      width: 100%;
+      padding: 1rem;
+    }
+
+    .messages {
+      flex: 1;
+      overflow-y: auto;
+      padding-right: 0.5rem;
+      scrollbar-width: thin;
+    }
+
+    .message {
+      margin: 0.5rem 0;
+      padding: 0.8rem 1rem;
+      border-radius: 12px;
+      max-width: 80%;
+      line-height: 1.4;
+      animation: fadeIn 0.3s ease-in-out;
+    }
+
+    .user {
+      background: #007bff;
+      align-self: flex-end;
+      color: white;
+    }
+
+    .bot {
+      background: #1b2735;
+      align-self: flex-start;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .input-area {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      margin-top: 1rem;
+      background: rgba(255,255,255,0.08);
+      padding: 1rem;
+      border-radius: 12px;
+    }
+
+    input[type="text"] {
+      flex: 1;
+      padding: 0.75rem;
+      border: none;
+      border-radius: 10px;
+      outline: none;
+      background: #1f4068;
+      color: #fff;
+    }
+
+    input[type="file"] {
+      color: #fff;
+      font-size: 0.9rem;
+    }
+
+    button {
+      background: #00e5ff;
+      border: none;
+      padding: 0.8rem;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: bold;
+      color: #111;
+      transition: all 0.3s ease;
+    }
+
+    button:hover {
+      background: #00c1d4;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    footer {
+      text-align: center;
+      padding: 0.5rem;
+      font-size: 0.85rem;
+      color: rgba(255,255,255,0.6);
+    }
+  </style>
+</head>
+<body>
+  <header>💬 Chat RAG - Bien Melo 😎</header>
+
+  <div class="chat-container">
+    <div class="messages" id="messages"></div>
+
+    <div class="input-area">
+      <input type="text" id="userMessage" placeholder="Escribe tu pregunta..." />
+      <input type="file" id="fileInput" accept=".txt" />
+      <button id="sendBtn">Enviar</button>
+    </div>
+  </div>
+
+  <footer>Desarrollado con ❤️ usando FastAPI + OpenAI</footer>
+
+  <script>
+    const sendBtn = document.getElementById("sendBtn");
+    const userMessage = document.getElementById("userMessage");
+    const fileInput = document.getElementById("fileInput");
+    const messagesDiv = document.getElementById("messages");
+
+    sendBtn.addEventListener("click", sendMessage);
+    userMessage.addEventListener("keypress", (e) => {
+      if (e.key === "Enter") sendMessage();
+    });
+
+    async function sendMessage() {
+      const message = userMessage.value.trim();
+      const file = fileInput.files[0];
+
+      if (!message) return;
+
+      appendMessage(message, "user");
+      userMessage.value = "";
+      fileInput.value = "";
+
+      const formData = new FormData();
+      formData.append("message", message);
+      if (file) formData.append("file", file);
+
+      appendMessage("⏳ Procesando tu solicitud...", "bot");
+
+      try {
+        const response = await fetch("http://localhost:8000/rag-chat", {
+          method: "POST",
+          body: formData,
+        });
+
+        const data = await response.json();
+        const botMsg = data.response || "No se obtuvo respuesta del servidor.";
+        appendMessage(botMsg, "bot");
+      } catch (err) {
+        appendMessage("⚠️ Error de conexión con el servidor.", "bot");
+        console.error(err);
+      }
+    }
+
+    function appendMessage(text, sender) {
+      const msgDiv = document.createElement("div");
+      msgDiv.classList.add("message", sender);
+      msgDiv.textContent = text;
+      messagesDiv.appendChild(msgDiv);
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }
+  </script>
+</body>
+</html>
